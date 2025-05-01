@@ -43,20 +43,20 @@ jobs:
           helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
           helm repo update
 
-          echo "Installing or upgrading ingress-nginx via Helm..."
           helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
           --namespace ingress-nginx \
-          --create-namespace \
-          --set controller.service.type=NodePort \
-          --set controller.service.nodePorts.http=80 \
-          --set controller.service.nodePorts.https=443 \
-          --set controller.admissionWebhooks.enabled=false
+          --set controller.kind=DaemonSet \
+          --set controller.daemonset.useHostPort=true \
+          --set controller.hostPort.enabled=true \
+          --set controller.service.type=ClusterIP \
+          --set controller.containerPort.http=80 \
+          --set controller.containerPort.https=443
 
           echo "Waiting for ingress-nginx-controller deployment to be ready..."
-          kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=90s
+          kubectl rollout status daemonset ingress-nginx-controller -n ingress-nginx --timeout=90s
 
           echo "Patching ingress-nginx-controller to set CPU/memory limits..."
-          kubectl -n ingress-nginx patch deployment ingress-nginx-controller \
+          kubectl -n ingress-nginx patch depdaemonsetloyment ingress-nginx-controller \
             --type='json' \
             -p='[
               {
