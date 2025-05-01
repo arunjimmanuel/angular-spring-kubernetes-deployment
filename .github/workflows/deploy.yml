@@ -56,7 +56,7 @@ jobs:
           kubectl rollout status daemonset ingress-nginx-controller -n ingress-nginx --timeout=90s
 
           echo "Patching ingress-nginx-controller to set CPU/memory limits..."
-          kubectl -n ingress-nginx patch depdaemonsetloyment ingress-nginx-controller \
+          kubectl -n ingress-nginx patch daemonset ingress-nginx-controller \
             --type='json' \
             -p='[
               {
