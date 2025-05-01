@@ -98,7 +98,7 @@ jobs:
       - name: Wait for MongoDB to be Ready
         run: |
           echo "Waiting for MongoDB pod to be ready..."
-          kubectl rollout status deployment mongodb-deployment -n default --timeout=90s
+          kubectl rollout status deployment mongo -n default --timeout=90s
 
       - name: Apply Spring App Deployment and Service
         run: |
