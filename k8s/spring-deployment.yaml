@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-demo-app
+spec:
+  revisionHistoryLimit: 0
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-demo-app
+  template:
+    metadata:
+      labels:
+        app: spring-demo-app
+    spec:
+      containers:
+        - name: spring-demo-container
+          image: immanuel2305/spring-demo-app:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              value: mongodb://mongo-service.default.svc.cluster.local:27017/jobtrackerdb
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            failureThreshold: 12 # Try 12 times...
+            periodSeconds: 10 # every 10 seconds
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "200Mi"
+              cpu: "200m"
+            limits:
+              memory: "350Mi"
+              cpu: "400m"
