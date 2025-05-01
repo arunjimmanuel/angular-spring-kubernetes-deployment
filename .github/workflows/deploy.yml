@@ -50,7 +50,8 @@ jobs:
           --set controller.hostPort.enabled=true \
           --set controller.service.type=ClusterIP \
           --set controller.containerPort.http=80 \
-          --set controller.containerPort.https=443
+          --set controller.containerPort.https=443 \
+          --set controller.admissionWebhooks.enabled=false
 
           echo "Waiting for ingress-nginx-controller deployment to be ready..."
           kubectl rollout status daemonset ingress-nginx-controller -n ingress-nginx --timeout=90s
@@ -80,6 +81,11 @@ jobs:
           kubectl apply -f k8s/mongo-pvc.yaml
           kubectl apply -f k8s/mongo-deployment.yaml  
           kubectl apply -f k8s/mongo-service.yaml
+
+      - name: Wait for ingress-nginx-controller to be ready
+        run: |
+           echo "Waiting for ingress-nginx-controller DaemonSet to be ready..."
+           kubectl rollout status daemonset ingress-nginx-controller -n ingress-nginx --timeout=90s
       
       - name: Apply Angular Deployment and Service
         run: |
@@ -88,6 +94,11 @@ jobs:
 
           kubectl delete ingress angular-ingress --ignore-not-found=true
           kubectl apply -f k8s/ingress.yaml --validate=false
+
+      - name: Wait for MongoDB to be Ready
+        run: |
+          echo "Waiting for MongoDB pod to be ready..."
+          kubectl rollout status deployment mongodb-deployment -n default --timeout=90s
 
       - name: Apply Spring App Deployment and Service
         run: |
