@@ -1,6 +1,6 @@
-# ⚡ Minimal Kubernetes Setup using K3s on AWS EC2 (Ubuntu 22.04, t3.micro)
+# ⚡ Minimal Kubernetes Setup using K3s on AWS EC2 (Ubuntu 22.04, t2.micro)
 
-This guide provides a step-by-step setup of a lightweight Kubernetes cluster using [K3s](https://k3s.io/) on an **AWS EC2 `t3.micro` instance running Ubuntu 22.04**.
+This guide provides a step-by-step setup of a lightweight Kubernetes cluster using [K3s](https://k3s.io/) on an **AWS EC2 `t2.micro` instance running Ubuntu 22.04**.
 
 It is optimized for minimal memory usage, dynamic volume provisioning, and integration with **GitHub Actions** using `kubectl` and `Helm`.
 
@@ -8,7 +8,7 @@ It is optimized for minimal memory usage, dynamic volume provisioning, and integ
 
 ## 🚀 Requirements
 
-- AWS EC2 instance (`t3.micro` or similar)
+- AWS EC2 instance (`t2.micro` or similar)
 - Ubuntu 22.04 LTS (64-bit)
 - Access via SSH with `sudo` privileges
 - Ports 6443 (Kubernetes API), 80 (HTTP), and optionally 443 (HTTPS) open in your Security Group
@@ -30,7 +30,7 @@ sudo apt update && sudo apt upgrade -y
 Disable unnecessary components for low-memory environments:
 
 ```bash
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable traefik --disable metrics-server --disable local-storage --disable servicelb" sh -
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable traefik --disable metrics-server --disable servicelb" sh -
 ```
 
 ---
@@ -97,13 +97,17 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 
 ---
 
-### 9. Set `local-path` as the Default Storage Class
+### 9. Increase Swap Memory (Optional but Recommended for t2.micro)
 
+To improve stability and prevent out-of-memory issues on low-memory instances like t2.micro, increase swap space:
 ```bash
-kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
 ```
 
----
+💡 This allocates 2 GB of swap space to reduce the risk of memory exhaustion and slowdowns under load.
 
 ## 📦 What You Now Have
 

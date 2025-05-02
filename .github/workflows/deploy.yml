@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-deploy:
-    runs-on: [self-hosted, deployment-runner]
+    runs-on: [self-hosted]
     env:
       KUBECONFIG: /home/ubuntu/.kube/config
 
