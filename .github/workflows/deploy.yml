@@ -104,5 +104,6 @@ jobs:
           kubectl apply --request-timeout=60s -f k8s/spring-deployment.yaml
           kubectl apply --request-timeout=60s -f k8s/spring-service.yaml
 
-      - name: Clean up unused Docker images
-        run: docker image prune -f
+      - name: Clean up unused containerd images
+        run: sudo ctr images prune --all
+        
