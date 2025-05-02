@@ -40,7 +40,9 @@ jobs:
           echo "Adding and updating ingress-nginx Helm repo..."
           helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx || true
           helm repo update
-
+          
+          kubectl create namespace ingress-nginx || true
+          
           helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
           --namespace ingress-nginx \
           --set controller.kind=DaemonSet \
