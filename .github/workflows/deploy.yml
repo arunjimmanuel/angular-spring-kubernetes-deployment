@@ -78,9 +78,9 @@ jobs:
 
       - name: Apply MongoDB Kubernetes Resources
         run: |
-          kubectl apply -f k8s/mongo-pvc.yaml
-          kubectl apply -f k8s/mongo-deployment.yaml  
-          kubectl apply -f k8s/mongo-service.yaml
+          kubectl apply --request-timeout=60s -f k8s/mongo-pvc.yaml
+          kubectl apply --request-timeout=60s -f k8s/mongo-deployment.yaml  
+          kubectl apply --request-timeout=60s -f k8s/mongo-service.yaml
 
       - name: Wait for ingress-nginx-controller to be ready
         run: |
@@ -89,11 +89,10 @@ jobs:
       
       - name: Apply Angular Deployment and Service
         run: |
-          kubectl apply -f k8s/angular-deployment.yaml
-          kubectl apply -f k8s/angular-service.yaml
+          kubectl apply --request-timeout=60s -f k8s/angular-deployment.yaml
+          kubectl apply --request-timeout=60s -f k8s/angular-service.yaml
 
-          kubectl delete ingress angular-ingress --ignore-not-found=true
-          kubectl apply -f k8s/ingress.yaml --validate=false
+          kubectl apply --request-timeout=60s -f k8s/ingress.yaml --validate=false
 
       - name: Wait for MongoDB to be Ready
         run: |
@@ -102,8 +101,8 @@ jobs:
 
       - name: Apply Spring App Deployment and Service
         run: |
-          kubectl apply -f k8s/spring-deployment.yaml
-          kubectl apply -f k8s/spring-service.yaml
+          kubectl apply --request-timeout=60s -f k8s/spring-deployment.yaml
+          kubectl apply --request-timeout=60s -f k8s/spring-service.yaml
 
       - name: Clean up unused Docker images
         run: docker image prune -f
