@@ -1,6 +1,7 @@
 name: Build and Deploy to Docker Hub & Kubernetes
 
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
 
