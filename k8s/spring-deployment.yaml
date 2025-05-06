@@ -25,16 +25,18 @@ spec:
               value: mongodb://mongo-service.default.svc.cluster.local:27017/jobtrackerdb
           startupProbe:
             httpGet:
-              path: /actuator/health
+              path: /health
               port: 8080
-            failureThreshold: 12 # Try 12 times...
-            periodSeconds: 10 # every 10 seconds
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 10
           readinessProbe:
             httpGet:
-              path: /actuator/health
+              path: /health
               port: 8080
-            initialDelaySeconds: 5
+            initialDelaySeconds: 30
             periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               memory: "100Mi"
