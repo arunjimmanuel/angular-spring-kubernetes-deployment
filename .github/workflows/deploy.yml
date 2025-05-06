@@ -92,7 +92,7 @@ jobs:
           kubectl apply --request-timeout=60s -f k8s/angular-deployment.yaml
           kubectl apply --request-timeout=60s -f k8s/angular-service.yaml
 
-          kubectl apply --request-timeout=60s -f k8s/ingress.yaml --validate=false
+          kubectl apply --request-timeout=300s -f k8s/ingress.yaml --validate=false
 
       - name: Wait for MongoDB to be Ready
         run: |
