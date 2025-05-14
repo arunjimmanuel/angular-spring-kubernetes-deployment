@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: spring-demo-container
-          image: immanuel2305/spring-demo-app:latest
+          image: immanuel2305/spring-demo-app:abf091e
           ports:
             - containerPort: 8080
           env:
@@ -23,16 +23,21 @@ spec:
               value: "-Xms32m -Xmx96m"
             - name: SPRING_DATA_MONGODB_URI
               value: mongodb://mongo-service.default.svc.cluster.local:27017/jobtrackerdb
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_SECRET_KEY
           startupProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 15
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10

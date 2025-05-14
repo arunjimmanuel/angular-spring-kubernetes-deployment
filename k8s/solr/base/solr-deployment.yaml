@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: solr
+spec:
+  revisionHistoryLimit: 0
+  replicas: 1
+  selector:
+    matchLabels:
+      app: solr
+  template:
+    metadata:
+      labels:
+        app: solr
+    spec:
+      containers:
+        - name: solr
+          image: solr:latest
+          ports:
+            - containerPort: 8983
+          args:
+            - solr-precreate
+            - jobcore
+          env:
+            - name: SOLR_JAVA_MEM
+              value: "-Xms128m -Xmx256m"
+            - name: SOLR_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: solr-auth-secret
+                  key: SOLR_ADMIN_USER
+            - name: SOLR_ADMIN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: solr-auth-secret
+                  key: SOLR_ADMIN_PASS
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    echo "Waiting for Solr to be ready..."
+                    i=0
+                    while [ $i -lt 30 ]; do
+                      if curl -s http://localhost:8983/solr/ > /dev/null; then break; fi
+                      i=$((i+1))
+                      sleep 2
+                    done
+                    if [ $i -eq 30 ]; then
+                      echo "Solr did not start in time."
+                      exit 1
+                    fi
+
+                    echo "Creating core..."
+                    curl -s "http://localhost:8983/solr/admin/cores?action=CREATE&name=jobcore&instanceDir=jobcore"
+
+                    echo "Uploading schema..."
+                     if [ ! -s /schema.json ]; then
+                      echo "/schema.json is missing or empty!"
+                      exit 1
+                    fi
+                    curl -X POST http://localhost:8983/solr/jobcore/schema \
+                      -H "Content-Type: application/json" \
+                      --data-binary @/schema.json
+
+                    echo "Schema file contents:"
+                    cat /schema.json
+
+                    echo "Verifying schema is applied (checking for 'companyName')..."
+                    j=0
+                    while [ $j -lt 10 ]; do
+                      if curl -s http://localhost:8983/solr/jobcore/schema/fields | grep -q '"companyName"'; then
+                        echo "Schema applied successfully."
+                        break
+                      fi
+                      j=$((j+1))
+                      sleep 2
+                    done
+                    if [ $j -eq 10 ]; then
+                      echo "Schema did not apply in time."
+                      exit 1
+                    fi
+                    echo "Enabling Solr auth..."
+                    curl -s -X POST http://localhost:8983/solr/admin/authentication \
+                      -H 'Content-type:application/json' \
+                      -d "{\"set-user\": {\"$SOLR_ADMIN_USER\": \"$SOLR_ADMIN_PASS\"}, \"set-property\": {\"blockUnknown\": true}}"
+          volumeMounts:
+            - name: solr-storage
+              mountPath: /var/solr
+            - name: solr-schema-volume
+              mountPath: /schema.json
+              subPath: schema.json
+      volumes:
+        - name: solr-storage
+          persistentVolumeClaim:
+            claimName: solr-pvc
+        - name: solr-schema-volume
+          configMap:
+            name: solr-schema-configmap

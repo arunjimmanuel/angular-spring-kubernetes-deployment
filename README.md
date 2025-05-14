@@ -107,6 +107,12 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 ```
 
+### 10. Create secret 
+
+kubectl create secret generic jwt-secret \
+  --from-literal=JWT_SECRET_KEY={YOUR JWT SECRET}
+
+
 💡 This allocates 2 GB of swap space to reduce the risk of memory exhaustion and slowdowns under load.
 
 ## 📦 What You Now Have

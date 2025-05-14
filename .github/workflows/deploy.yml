@@ -78,9 +78,15 @@ jobs:
 
       - name: Apply MongoDB Kubernetes Resources
         run: |
-          kubectl apply --request-timeout=60s -f k8s/mongo-pvc.yaml
-          kubectl apply --request-timeout=60s -f k8s/mongo-deployment.yaml  
-          kubectl apply --request-timeout=60s -f k8s/mongo-service.yaml
+          kubectl apply --request-timeout=60s -f k8s/mongo/base/mongo-pvc.yaml
+          kubectl apply --request-timeout=60s -f k8s/mongo/base/mongo-deployment.yaml  
+          kubectl apply --request-timeout=60s -f k8s/mongo/base/mongo-service.yaml
+
+      - name: Apply Solr Kubernetes resources
+        run: |
+          kubectl apply --request-timeout=60s -f k8s/solr/base/solr-pvc.yaml
+          kubectl apply --request-timeout=60s -f k8s/solr/base/solr-deployment.yaml  
+          kubectl apply --request-timeout=60s -f k8s/solr/base/solr-service.yaml
 
       - name: Wait for ingress-nginx-controller to be ready
         run: |
@@ -89,20 +95,25 @@ jobs:
       
       - name: Apply Angular Deployment and Service
         run: |
-          kubectl apply --request-timeout=60s -f k8s/angular-deployment.yaml
-          kubectl apply --request-timeout=60s -f k8s/angular-service.yaml
+          kubectl apply --request-timeout=60s -f k8s/angular/base/angular-deployment.yaml
+          kubectl apply --request-timeout=60s -f k8s/angular/base/angular-service.yaml
 
-          kubectl apply --request-timeout=300s -f k8s/ingress.yaml --validate=false
+          kubectl apply --request-timeout=300s -k k8s/ingress/overlays/aws/
 
       - name: Wait for MongoDB to be Ready
         run: |
           echo "Waiting for MongoDB pod to be ready..."
           kubectl rollout status deployment mongo -n default --timeout=90s
 
+      - name: Wait for Solr to be Ready
+        run: |
+          echo "Waiting for Solr pod to be ready..."
+          kubectl rollout status deployment/solr --namespace=default --timeout=90s
+
       - name: Apply Spring App Deployment and Service
         run: |
-          kubectl apply --request-timeout=60s -f k8s/spring-deployment.yaml
-          kubectl apply --request-timeout=60s -f k8s/spring-service.yaml
+          kubectl apply --request-timeout=60s -f k8s/spring/base/spring-deployment.yaml
+          kubectl apply --request-timeout=60s -f k8s/spring/base/spring-service.yaml
 
       - name: Clean up unused containerd images
         run: sudo ctr images prune --all

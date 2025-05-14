@@ -1,0 +1,60 @@
+{
+  "add-field": [
+    {
+      "name": "title",
+      "type": "text_general",
+      "stored": true,
+      "indexed": true,
+      "multiValued": false
+    },
+    {
+      "name": "companyName",
+      "type": "text_general",
+      "stored": true,
+      "indexed": true,
+      "multiValued": false
+    },
+    {
+      "name": "location",
+      "type": "text_general",
+      "stored": true,
+      "indexed": true,
+      "multiValued": false
+    },
+    {
+      "name": "description",
+      "type": "text_general",
+      "stored": true,
+      "indexed": true,
+      "multiValued": false
+    },
+    {
+      "name": "url",
+      "type": "string",
+      "stored": true,
+      "indexed": true,
+      "multiValued": false
+    },
+    {
+      "name": "isRemote",
+      "type": "boolean",
+      "stored": true,
+      "indexed": true,
+      "multiValued": false
+    },
+    {
+      "name": "createdAt",
+      "type": "pdate",
+      "stored": true,
+      "indexed": true,
+      "multiValued": false
+    },
+    {
+      "name": "tags",
+      "type": "text_general",
+      "stored": true,
+      "indexed": true,
+      "multiValued": true
+    }
+  ]
+}

@@ -48,7 +48,16 @@ echo "Uploading setup-k3s.sh..."
 scp -i ~/.ssh/"$KEY_NAME".pem setup-k3s.sh ubuntu@$PUBLIC_IP:/home/ubuntu/
 
 # 7. Run the script
-echo "Running setup-k3s.sh remotely..."
-ssh -i ~/.ssh/"$KEY_NAME".pem ubuntu@$PUBLIC_IP 'bash setup-k3s.sh'
+echo "Running setup scripts remotely..."
+ssh -i ~/.ssh/"$KEY_NAME".pem ubuntu@$PUBLIC_IP 'bash create-swap-memory.sh'
+ssh -i ~/.ssh/"$KEY_NAME".pem ubuntu@$PUBLIC_IP 'bash local/setup-k3s.sh'
+ssh -i ~/.ssh/"$KEY_NAME".pem ubuntu@$PUBLIC_IP 'bash git-action-runner.sh'
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load the .env file from the root folder (one level up)
+source "$SCRIPT_DIR/../.env"
+# Update DuckDNS
+curl "https://www.duckdns.org/update?domains=arunimmanuel&token=$DUCKDNS_TOKEN&ip=$PUBLIC_IP"
 
 echo "All done!"
