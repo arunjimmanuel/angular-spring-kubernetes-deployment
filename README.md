@@ -1,155 +1,150 @@
-# ⚡ Minimal Kubernetes Setup using K3s on AWS EC2 (Ubuntu 22.04, t2.micro)
+# Angular + Spring Boot Deployment on Kubernetes (AWS EC2 with K3s)
 
-This guide provides a step-by-step setup of a lightweight Kubernetes cluster using [K3s](https://k3s.io/) on an **AWS EC2 `t2.micro` instance running Ubuntu 22.04**.
+![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-blue) ![AWS](https://img.shields.io/badge/AWS-EC2-orange) ![Docker](https://img.shields.io/badge/Docker-Containerization-blue) ![CI/CD](https://img.shields.io/badge/CI/CD-GitHub%20Actions-green)
 
-It is optimized for minimal memory usage, dynamic volume provisioning, and integration with **GitHub Actions** using `kubectl` and `Helm`.
+## 🔍 Overview
 
----
+This repository provides a complete deployment setup for a full-stack application—**Angular frontend** + **Spring Boot backend**—using **K3s Kubernetes** on an **AWS EC2 Ubuntu server**. The setup includes:
 
-## 🚀 Requirements
+- Lightweight Kubernetes (K3s)
+- Secure, JWT-based communication
+- Docker containerization
+- GitHub Actions CI/CD pipeline
 
-- AWS EC2 instance (`t2.micro` or similar)
-- Ubuntu 22.04 LTS (64-bit)
-- Access via SSH with `sudo` privileges
-- Ports 6443 (Kubernetes API), 80 (HTTP), and optionally 443 (HTTPS) open in your Security Group
+## 🧰 Tech Stack
 
----
+- **Frontend**: Angular 17
+- **Backend**: Spring Boot 3
+- **Containers**: Docker
+- **Orchestration**: Kubernetes (K3s)
+- **Ingress**: NGINX
+- **CI/CD**: GitHub Actions (`.github/workflows/deploy.yaml`)
+- **Platform**: AWS EC2 (Ubuntu 22.04)
+- **Package Manager**: Helm
 
-## ✅ Installation Steps
+## 📁 Repository Structure
 
-### 1. Update Ubuntu Packages
+```
+angular-spring-kubernetes-deployment/
+├── .github/
+│   └── workflows/
+│       └── deploy.yaml
+├── aws/
+│   ├── create-instance.sh
+│   ├── create-swap-memory.sh
+│   ├── git-action-runner.sh
+│   ├── terminate-instance.sh
+│   └── README.md
+├── k8s/
+│   ├── angular/
+│   │   └── base/
+│   │       ├── angular-deployment.yaml
+│   │       └── angular-service.yaml
+│   ├── ingress/
+│   │   ├── base/
+│   │   │   └── ingress.yaml
+│   │   └── overlays/
+│   │       ├── kustomization.yaml
+│   │       └── path-ingress-host.yaml
+│   ├── mongo/
+│   │   ├── mongo-deployment.yaml
+│   │   ├── mongo-service.yaml
+│   │   └── mongo-pvc.yaml
+│   ├── solr/
+│   │   ├── schema.json
+│   │   ├── solr-deployment.yaml
+│   │   ├── solr-service.yaml
+│   │   └── solr-pvc.yaml
+│   └── spring/
+│       ├── spring-deployment.yaml
+│       └── spring-service.yaml
+├── local/
+│   ├── deploy.sh
+│   ├── setup-k3.sh
+│   └── README.md
+└── README.md
 
-```bash
-sudo apt update && sudo apt upgrade -y
+
 ```
 
----
+## 🚀 Deployment Guide
 
-### 2. Install K3s (Minimal Setup)
+### 1. 🚀 Launch AWS EC2 Instance
 
-Disable unnecessary components for low-memory environments:
+- **Type**: `t2.micro`
+- **AMI**: Ubuntu 22.04 LTS
+- **Ports**: 22 (SSH), 80 (HTTP), 443 (HTTPS)
 
+### 2. ⚙️ Install K3s
+
+SSH into the EC2 instance and run:
 ```bash
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable traefik --disable metrics-server --disable servicelb" sh -
+curl -sfL https://get.k3s.io | sh -
 ```
 
----
-
-### 3. Configure kubectl for Your User
-
+### 3. 🛠️ Configure kubectl
 ```bash
-mkdir -p ~/.kube
+mkdir ~/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 sudo chown $(id -u):$(id -g) ~/.kube/config
 ```
 
----
-
-### 4. Export KUBECONFIG in Shell (Optional)
-
+### 4. 🧱 Apply Kubernetes Manifests
+Choose environment (`dev` or `prod`) and apply:
 ```bash
-echo 'export KUBECONFIG=$HOME/.kube/config' >> ~/.bashrc
-source ~/.bashrc
+kubectl apply -f k8s/dev/namespace.yaml
+kubectl apply -f k8s/dev/backend-deployment.yaml
+kubectl apply -f k8s/dev/frontend-deployment.yaml
+kubectl apply -f k8s/dev/ingress.yaml
 ```
 
----
-
-### 5. Verify the K3s Node is Running
-
+### 5. 🌐 Set Up Ingress Controller
 ```bash
-kubectl get nodes
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx
 ```
 
----
+After installation, check the LoadBalancer IP and use it to access your app.
 
-### 6. Install Helm (Client Only)
+### 6. 🔗 Access the Application
+Use the EC2 public IP or domain name to view your deployed application.
 
-```bash
-curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+## ⚙️ GitHub Actions CI/CD
+
+Automated CI/CD workflow is available at:
+```
+.github/workflows/deploy.yaml
 ```
 
----
+**Workflow Highlights:**
+- Trigger on push to `main`
+- Build and push Docker images
+- Apply K8s manifests using kubeconfig
 
-### 7. Get Base64-Encoded Kubeconfig (for GitHub Actions)
+> 💡 GitHub Secrets required:
+> - `DOCKER_USERNAME`
+> - `DOCKER_PASSWORD`
+> - `KUBECONFIG_B64` (base64 encoded kubeconfig file)
 
-To use your cluster in GitHub Actions (as a secret):
+## 🔐 Security
+- JWT used for secure API communication
+- Kubernetes Secrets for sensitive configs
+- TLS via Ingress NGINX (can be extended with cert-manager)
 
-```bash
-base64 -w 0 ~/.kube/config
-```
+## 📊 Monitoring & Logging
 
-> 💡 On macOS use:
-> ```bash
-> base64 ~/.kube/config | tr -d '\n'
-> ```
+Optionally integrate:
+- **Prometheus + Grafana** for monitoring
+- **ELK stack** for logging (Elasticsearch, Logstash, Kibana)
 
-Use this string as your `KUBECONFIG_B64` GitHub secret.
+## 🔎 SEO Tags
+`Spring Boot Kubernetes`, `Angular Docker K8s`, `CI/CD GitHub Actions Kubernetes`, `K3s EC2 Deployment`, `Full Stack Cloud Native Java App`, `Helm Deployment`, `Ingress Controller`, `Kubernetes NGINX`, `Lightweight Kubernetes`, `Microservice Deployment AWS`
 
----
-
-### 8. Install the Local Path Provisioner (for PVC Support)
-
-K3s disables the default provisioner when you use `--disable local-storage`, so re-enable it manually:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
-```
-
----
-
-### 9. Increase Swap Memory (Optional but Recommended for t2.micro)
-
-To improve stability and prevent out-of-memory issues on low-memory instances like t2.micro, increase swap space:
-```bash
-sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-```
-
-### 10. Create secret 
-
-kubectl create secret generic jwt-secret \
-  --from-literal=JWT_SECRET_KEY={YOUR JWT SECRET}
-
-
-💡 This allocates 2 GB of swap space to reduce the risk of memory exhaustion and slowdowns under load.
-
-## 📦 What You Now Have
-
-- A minimal, single-node Kubernetes cluster via K3s
-- Helm v3 installed for managing charts
-- PersistentVolumeClaim (PVC) support via `local-path` provisioner
-- GitHub Actions ready (`kubectl` configured via base64 secret)
+## 👤 Author
+**Arun Jaya Immanuel**  
+🔗 [LinkedIn](https://www.linkedin.com/in/arunimmanuel/)  
+💼 Backend Developer | Spring Boot | Kubernetes | Cloud-Native Solutions
 
 ---
-
-## ✅ Recommended Add-ons
-
-- **Ingress-NGINX Controller (with hostPort):**
-  - Use Helm with `hostPort.enabled=true` if port 80 is open
-- **MongoDB, Spring Boot, Angular apps**: You can deploy these as separate Kubernetes resources
-
----
-
-## 🧹 Optional Cleanup
-
-To uninstall K3s:
-
-```bash
-sudo /usr/local/bin/k3s-uninstall.sh
-```
-
----
-
-## 📝 Author Notes
-
-This setup is actively used in production-like development environments with GitHub Actions CI/CD pipelines and resource-constrained nodes.
-
----
-
-## 📎 References
-
-- [K3s Docs](https://docs.k3s.io/)
-- [Helm](https://helm.sh/)
-- [Local Path Provisioner](https://github.com/rancher/local-path-provisioner)
+Feel free to fork or star ⭐ this project if it helps you!
